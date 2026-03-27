@@ -87,7 +87,7 @@ class WHVCrawler:
         return sorted(list(result_set))
 
     def extract_data_from_html(self, html: str, visa_type: str):
-        """破解 SharePoint 隐藏 JSON 数据机制，提取表格"""
+        """破解 SharePoint 隐藏 JSON 数据机制，提取表格（彻底修复严格过滤导致的漏抓）"""
         soup = BeautifulSoup(html, 'html.parser')
         input_tag = soup.find('input', {'id': 'ctl00_PlaceHolderMain_PageSchemaHiddenField_Input'})
         if not input_tag: return
@@ -102,19 +102,33 @@ class WHVCrawler:
             html_block = section.get('block', '')
             if not html_block: continue
 
-            industries = []
-            if 'remote' in section_title:
-                industries = ['旅游和酒店业']
-            elif 'northern' in section_title:
-                industries = ['旅游和酒店业', '动植物栽培', '林业', '捕鱼与采珠业', '建筑业']
+            # 扩大关键词库，确保不遗漏任何有效表格
+            industries = set()
+
+            # 1. 行业明文匹配 (新增农业/肉厂等变体)
+            if any(kw in section_title for kw in ['tourism', 'hospitality']): industries.add('旅游和酒店业')
+            if any(kw in section_title for kw in ['plant', 'animal', 'farm', 'agri', 'meat']): industries.add(
+                '动植物栽培 (含肉厂/农业)')
+            if any(kw in section_title for kw in ['tree', 'forest', 'fell']): industries.add('林业')
+            if any(kw in section_title for kw in ['fish', 'pearl']): industries.add('捕鱼与采珠业')
+            if 'mining' in section_title: industries.add('采矿业')
+            if 'construction' in section_title: industries.add('建筑业')
+            if any(kw in section_title for kw in ['bushfire', 'disaster', 'flood', 'recovery']): industries.add(
+                '灾后重建')
+
+            # 2. 宽泛地域兜底 (官方喜欢用地域命名面板)
+            if 'northern' in section_title:
+                industries.update(['旅游和酒店业', '动植物栽培 (含肉厂/农业)', '林业', '捕鱼与采珠业', '建筑业'])
+            elif 'remote' in section_title:
+                industries.update(['旅游和酒店业'])
             elif 'regional' in section_title:
-                industries = ['动植物栽培', '建筑业']
-            elif any(kw in section_title for kw in ['bushfire', 'disaster', 'flood']):
-                industries = ['灾后重建']
-            else:
-                if not any(kw in section_title for kw in ['remote', 'northern', 'regional', 'bushfire', 'disaster']):
-                    continue
-                industries = ['其他指定行业']
+                industries.update(['动植物栽培 (含肉厂/农业)', '建筑业', '林业', '采矿业'])
+
+            # 3. 终极防漏盾牌：如果什么都没匹配到，但这个块里有包含数字的表格
+            if not industries and 'table' in html_block:
+                industries.update(['动植物栽培 (含肉厂/农业)', '建筑业'])  # 默认给范围最大的基础集签行业
+
+            industries_list = list(industries)
 
             block_soup = BeautifulSoup(html_block, 'html.parser')
             for table in block_soup.find_all('table'):
@@ -123,11 +137,13 @@ class WHVCrawler:
                     if len(cols) >= 2:
                         state = cols[0].get_text(strip=True)
                         raw_postcodes = cols[1].get_text(strip=True)
+
+                        # 跳过表头
                         if 'postcode' in raw_postcodes.lower() or 'state' in state.lower(): continue
 
                         flattened_postcodes = self.parse_postcode_string(raw_postcodes)
                         if flattened_postcodes:
-                            for ind in industries:
+                            for ind in industries_list:
                                 self.merge_into_final_data(flattened_postcodes, state, ind, visa_type)
 
     def merge_into_final_data(self, postcodes: list[str], state: str, industry: str, visa_type: str):

@@ -13,231 +13,49 @@
             --gray-border: #dfe1e5;
         }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: var(--bg-color); color: var(--text-color); height: 100vh; width: 100vw; overflow: hidden; display: flex; flex-direction: column; }
 
-        /* 保证页面完美适配浏览器一屏大小 */
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            height: 100vh;
-            width: 100vw;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-        }
+        header { display: flex; justify-content: space-between; align-items: center; padding: 20px 30px; }
+        .logo { font-size: 1.2rem; font-weight: bold; color: #5f6368; }
 
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px 30px;
-        }
+        .toggle-wrapper { display: flex; align-items: center; gap: 15px; font-size: 1.15rem; }
+        .switch { position: relative; display: inline-block; width: 70px; height: 36px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .3s; border-radius: 36px; }
+        .slider:before { position: absolute; content: ""; height: 28px; width: 28px; left: 4px; bottom: 4px; background-color: white; transition: .3s; border-radius: 50%; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        input:checked + .slider { background-color: var(--primary-color); }
+        input:checked + .slider:before { transform: translateX(34px); }
+        .active-visa { color: var(--primary-color); font-weight: 700; }
 
-        .logo {
-            font-size: 1.2rem;
-            font-weight: bold;
-            color: #5f6368;
-        }
+        main { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; padding: 0 20px; margin-top: -15vh; }
+        h1 { font-size: 2.2rem; margin-bottom: 20px; color: #202124; letter-spacing: -0.5px; }
 
-        /* --- 核心修改：显著放大的签证切换组件 --- */
-        .toggle-wrapper {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            font-size: 1.15rem; /* 字体适度放大 */
-        }
+        /* 搜索模式切换 */
+        .search-mode-tabs { display: flex; gap: 30px; margin-bottom: 20px; font-size: 15px; font-weight: 500; color: #5f6368; }
+        .search-mode-tabs label { cursor: pointer; display: flex; align-items: center; gap: 6px; }
+        .search-mode-tabs input[type="radio"] { accent-color: var(--primary-color); transform: scale(1.2); cursor: pointer; }
 
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 70px;  /* 宽度显著放大 */
-            height: 36px; /* 高度显著放大 */
-        }
+        .search-container { width: 100%; max-width: 580px; position: relative; }
+        .search-box { display: flex; align-items: center; width: 100%; height: 52px; background: #fff; border: 1px solid var(--gray-border); border-radius: 26px; padding: 0 24px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); transition: all 0.2s; }
+        .search-box:hover, .search-box:focus-within { box-shadow: 0 4px 12px rgba(32, 33, 36, 0.15); border-color: transparent; }
 
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
+        /* 针对两种输入的统一样式 */
+        .search-box input, .search-box select { flex: 1; height: 100%; border: none; outline: none; font-size: 16px; background: transparent; color: var(--text-color); }
+        .search-box select { cursor: pointer; appearance: none; }
+        .search-btn { background: transparent; border: none; cursor: pointer; padding-left: 15px; color: var(--primary-color); font-weight: 600; font-size: 16px; }
 
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-color: #ccc;
-            transition: .3s;
-            border-radius: 36px;
-        }
+        #result-area { margin-top: 30px; width: 100%; max-width: 580px; min-height: 100px; }
+        .result-card { padding: 24px; border-radius: 12px; background-color: #fff; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border: 1px solid var(--gray-border); display: none; max-height: 400px; overflow-y: auto;}
 
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 28px; /* 滑块圆点放大 */
-            width: 28px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: .3s;
-            border-radius: 50%;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-        }
+        .tag { display: inline-block; padding: 6px 14px; border-radius: 16px; font-size: 14px; margin: 8px 8px 0 0; background-color: #e8f0fe; color: var(--primary-color); font-weight: 500; }
 
-        input:checked + .slider {
-            background-color: var(--primary-color);
-        }
-
-        input:checked + .slider:before {
-            transform: translateX(34px); /* 滑动距离相应增加 */
-        }
-        /* ------------------------------------- */
-
-        .tooltip-container {
-            position: relative;
-            cursor: help;
-            padding: 5px;
-            color: #5f6368;
-            transition: color 0.2s;
-        }
-
-        .active-visa {
-            color: var(--primary-color);
-            font-weight: 700;
-        }
-
-        /* Tooltip 悬浮框样式保持不变 */
-        .tooltip-container::after {
-            content: attr(data-tooltip);
-            position: absolute;
-            top: 130%;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 240px;
-            padding: 10px 14px;
-            background-color: rgba(32, 33, 36, 0.95);
-            color: #fff;
-            font-size: 13px;
-            border-radius: 6px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.2s;
-            z-index: 10;
-            text-align: center;
-            line-height: 1.5;
-        }
-
-        .tooltip-container::before {
-            content: "";
-            position: absolute;
-            top: 100%;
-            left: 50%;
-            transform: translateX(-50%);
-            border-width: 6px;
-            border-style: solid;
-            border-color: transparent transparent rgba(32, 33, 36, 0.95) transparent;
-            opacity: 0;
-            visibility: hidden;
-            transition: opacity 0.2s;
-        }
-
-        .tooltip-container:hover::after,
-        .tooltip-container:hover::before {
-            opacity: 1;
-            visibility: visible;
-        }
-
-        /* 居中主内容区，保持 Google 搜索的紧凑感 */
-        main {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            padding: 0 20px;
-            margin-top: -15vh;
-        }
-
-        h1 {
-            font-size: 2.4rem;
-            margin-bottom: 30px;
-            color: #202124;
-            letter-spacing: -0.5px;
-        }
-
-        .search-container {
-            width: 100%;
-            max-width: 580px;
-            position: relative;
-        }
-
-        .search-box {
-            display: flex;
-            align-items: center;
-            width: 100%;
-            height: 52px;
-            background: #fff;
-            border: 1px solid var(--gray-border);
-            border-radius: 26px;
-            padding: 0 24px;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
-            transition: all 0.2s;
-        }
-
-        .search-box:hover, .search-box:focus-within {
-            box-shadow: 0 4px 12px rgba(32, 33, 36, 0.15);
-            border-color: transparent;
-        }
-
-        .search-box input {
-            flex: 1;
-            height: 100%;
-            border: none;
-            outline: none;
-            font-size: 16px;
-            background: transparent;
-        }
-
-        .search-btn {
-            background: transparent;
-            border: none;
-            cursor: pointer;
-            padding-left: 15px;
-            color: var(--primary-color);
-            font-weight: 600;
-            font-size: 16px;
-        }
-
-        #result-area {
-            margin-top: 30px;
-            width: 100%;
-            max-width: 580px;
-            min-height: 100px;
-        }
-
-        .result-card {
-            padding: 24px;
-            border-radius: 12px;
-            background-color: #fff;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            border: 1px solid var(--gray-border);
-            display: none; 
-        }
-
-        .tag {
-            display: inline-block;
-            padding: 6px 14px;
-            border-radius: 16px;
-            font-size: 14px;
-            margin: 8px 8px 0 0;
-            background-color: #e8f0fe;
-            color: var(--primary-color);
-            font-weight: 500;
-        }
+        /* 行业结果小镇微标签 */
+        .micro-tag { display: inline-block; padding: 4px 10px; border-radius: 6px; font-size: 13px; background-color: #fff; border: 1px solid var(--gray-border); color: #3c4043; margin-bottom: 4px;}
+        details { background: #f8f9fa; border-radius: 8px; padding: 12px 16px; border: 1px solid var(--gray-border); margin-bottom: 10px; }
+        summary { cursor: pointer; font-weight: 600; color: #202124; list-style: none; outline: none; }
+        summary::-webkit-details-marker { display: none; }
+        summary:hover { color: var(--primary-color); }
     </style>
 </head>
 <body>
@@ -245,22 +63,32 @@
     <header>
         <div class="logo">AU WHV Checker</div>
         <div class="toggle-wrapper">
-            <span id="label-462" class="tooltip-container active-visa" data-tooltip="适用中国大陆等。二签包含：偏远地区农业、建筑业等，及北部地区旅游酒店业。">462签证</span>
-            
-            <label class="switch">
-                <input type="checkbox" id="visa-toggle">
-                <span class="slider"></span>
-            </label>
-
-            <span id="label-417" class="tooltip-container" data-tooltip="适用港台等。二签工作范围更广，通常无北部地区旅游业特例限制。">417签证</span>
+            <span id="label-462" class="active-visa">462签证</span>
+            <label class="switch"><input type="checkbox" id="visa-toggle"><span class="slider"></span></label>
+            <span id="label-417">417签证</span>
         </div>
     </header>
 
     <main>
-        <h1>集签区域与工作查询</h1>
+        <h1>寻找集签区域与工作</h1>
+
+        <div class="search-mode-tabs">
+            <label><input type="radio" name="searchMode" value="location" checked onchange="toggleSearchMode()"> 按邮编 / 地名查</label>
+            <label><input type="radio" name="searchMode" value="industry" onchange="toggleSearchMode()"> 按行业找地区</label>
+        </div>
+
         <div class="search-container">
             <div class="search-box">
                 <input type="text" id="search-input" placeholder="输入四位邮编 (如 0800) 或小镇名" autocomplete="off">
+                <select id="industry-select" style="display: none;">
+                    <option value="动植物栽培 (含肉厂/农业)">🍒 动植物栽培 (含肉厂/农业)</option>
+                    <option value="旅游和酒店业">🍹 旅游和酒店业</option>
+                    <option value="建筑业">🏗️ 建筑业</option>
+                    <option value="采矿业">⛏️ 采矿业</option>
+                    <option value="捕鱼与采珠业">🐟 捕鱼与采珠业</option>
+                    <option value="林业">🌲 林业</option>
+                    <option value="灾后重建">🛡️ 灾后重建</option>
+                </select>
                 <button class="search-btn" onclick="performSearch()">查询</button>
             </div>
         </div>
@@ -277,14 +105,14 @@
     <script>
         let rulesData = null;
         let townIndex = null;
+        let currentMode = 'location';
 
-        // 加载数据
         window.onload = async function() {
             try {
                 const response = await fetch('./data/rules.json');
                 const data = await response.json();
-                rulesData = data.postcode_data; // 邮编主体数据
-                townIndex = data.town_index;    // 镇名找邮编的字典
+                rulesData = data.postcode_data;
+                townIndex = data.town_index;
             } catch (error) {
                 console.error("数据加载失败:", error);
                 document.getElementById('result-status').innerText = '⚠️ 规则数据加载失败。';
@@ -297,54 +125,68 @@
         let currentVisa = '462';
 
         visaToggle.addEventListener('change', function() {
-            if(this.checked) {
-                currentVisa = '417';
-                label417.classList.add('active-visa');
-                label462.classList.remove('active-visa');
-            } else {
-                currentVisa = '462';
-                label462.classList.add('active-visa');
-                label417.classList.remove('active-visa');
-            }
-            if(document.getElementById('search-input').value.trim() !== '') {
-                performSearch();
-            }
+            currentVisa = this.checked ? '417' : '462';
+            label417.classList.toggle('active-visa', this.checked);
+            label462.classList.toggle('active-visa', !this.checked);
+            if(document.getElementById('result-card').style.display === 'block') performSearch();
         });
 
-        document.getElementById('search-input').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') performSearch();
-        });
+        document.getElementById('search-input').addEventListener('keypress', e => { if (e.key === 'Enter') performSearch(); });
+
+        // 切换 UI 状态
+        function toggleSearchMode() {
+            currentMode = document.querySelector('input[name="searchMode"]:checked').value;
+            const inputEl = document.getElementById('search-input');
+            const selectEl = document.getElementById('industry-select');
+
+            if (currentMode === 'location') {
+                inputEl.style.display = 'block';
+                selectEl.style.display = 'none';
+            } else {
+                inputEl.style.display = 'none';
+                selectEl.style.display = 'block';
+            }
+            document.getElementById('result-card').style.display = 'none'; // 重置结果区
+        }
 
         function performSearch() {
-            let query = document.getElementById('search-input').value.trim().toLowerCase();
             const resultCard = document.getElementById('result-card');
-            if (!query) return;
 
-            if (!rulesData || !townIndex) {
+            if (!rulesData) {
+                resultCard.style.display = 'block';
                 document.getElementById('result-status').innerText = '⏳ 数据正在加载中，请稍后再试...';
                 return;
             }
 
-            // 核心逻辑：判断输入的是邮编还是镇名
+            if (currentMode === 'location') {
+                searchByLocation();
+            } else {
+                searchByIndustry();
+            }
+        }
+
+        // --- 模式 1：查地点 ---
+        function searchByLocation() {
+            let query = document.getElementById('search-input').value.trim().toLowerCase();
+            const resultCard = document.getElementById('result-card');
+            if (!query) return;
+
             let targetPostcode = query;
             let isTownSearch = false;
             let displayTownName = "";
 
-            // 如果输入的不是纯数字（说明输入的是地名）
             if (isNaN(query)) {
-                targetPostcode = townIndex[query]; // 从字典里反查邮编
+                targetPostcode = townIndex[query];
                 isTownSearch = true;
                 displayTownName = query.charAt(0).toUpperCase() + query.slice(1);
             }
 
             resultCard.style.display = 'block';
             document.getElementById('result-title').innerText = isTownSearch ?
-                `小镇: ${displayTownName} (邮编 ${targetPostcode || '未知'})` :
-                `邮编: ${query}`;
+                `📌 ${displayTownName} (邮编 ${targetPostcode || '未知'})` : `📌 邮编: ${query}`;
 
-            // 如果输入的地名在全澳数据库里都找不到
             if (isTownSearch && !targetPostcode) {
-                document.getElementById('result-status').innerText = '❌ 找不到该地名，请检查拼写';
+                document.getElementById('result-status').innerText = '❌ 找不到该地名，请检查拼写或尝试搜其邮编';
                 document.getElementById('result-status').style.color = '#d93025';
                 document.getElementById('result-jobs').innerHTML = '';
                 return;
@@ -358,9 +200,7 @@
 
                 const industries = postcodeData[currentVisa].industries;
                 const jobsHTML = industries.map(ind => `<span class="tag">${ind}</span>`).join('');
-
-                // 展示该邮编下包含的几个代表性小镇（最多显示3个，避免太长）
-                const sampleTowns = postcodeData.towns.slice(0, 3).join(', ') + (postcodeData.towns.length > 3 ? ' 等' : '');
+                const sampleTowns = postcodeData.towns.slice(0, 5).join(', ') + (postcodeData.towns.length > 5 ? ' 等' : '');
 
                 document.getElementById('result-jobs').innerHTML =
                     `<p style="font-size: 13px; margin-bottom: 6px; color: #5f6368;">所在州: ${postcodeData.state} | 包含地区: ${sampleTowns}</p>` +
@@ -368,7 +208,54 @@
             } else {
                 document.getElementById('result-status').innerText = `❌ 当前区域不符合 ${currentVisa} 集签要求`;
                 document.getElementById('result-status').style.color = '#d93025';
-                document.getElementById('result-jobs').innerHTML = '<p style="font-size: 13px; color: #5f6368;">提示：只有政府白名单内的偏远地区或特定行业才可集签。</p>';
+                document.getElementById('result-jobs').innerHTML = '';
+            }
+        }
+
+        // --- 模式 2：查行业 (按州分组展示) ---
+        function searchByIndustry() {
+            const industry = document.getElementById('industry-select').value;
+            const resultCard = document.getElementById('result-card');
+            resultCard.style.display = 'block';
+
+            let matchCount = 0;
+            const stateGroups = {};
+
+            // 遍历并归类
+            Object.entries(rulesData).forEach(([postcode, pData]) => {
+                if (pData[currentVisa].eligible && pData[currentVisa].industries.includes(industry)) {
+                    matchCount++;
+                    if (!stateGroups[pData.state]) stateGroups[pData.state] = [];
+                    // 取该邮编下最具代表性的一个镇名作为补充展示
+                    const townStr = pData.towns.length > 0 ? `(${pData.towns[0]})` : '';
+                    stateGroups[pData.state].push(`<span class="micro-tag">${postcode} ${townStr}</span>`);
+                }
+            });
+
+            document.getElementById('result-title').innerText = `🎯 行业: ${industry}`;
+
+            if (matchCount > 0) {
+                document.getElementById('result-status').innerText = `✅ 找到 ${matchCount} 个支持 ${currentVisa} 签证的白名单邮编`;
+                document.getElementById('result-status').style.color = '#188038';
+
+                // 生成可折叠的手风琴列表
+                let htmlStr = '<div style="margin-top: 15px; text-align: left;">';
+                for (const [state, tags] of Object.entries(stateGroups)) {
+                    htmlStr += `
+                        <details>
+                            <summary>${state} (${tags.length} 个邮编) ▾</summary>
+                            <div style="margin-top: 10px; display: flex; flex-wrap: wrap; gap: 6px;">
+                                ${tags.join('')}
+                            </div>
+                        </details>
+                    `;
+                }
+                htmlStr += '</div>';
+                document.getElementById('result-jobs').innerHTML = htmlStr;
+            } else {
+                document.getElementById('result-status').innerText = `❌ 未找到支持该行业的集签区域`;
+                document.getElementById('result-status').style.color = '#d93025';
+                document.getElementById('result-jobs').innerHTML = '';
             }
         }
     </script>
