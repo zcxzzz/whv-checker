@@ -81,13 +81,13 @@
             <div class="search-box">
                 <input type="text" id="search-input" placeholder="输入四位邮编 (如 0800) 或小镇名" autocomplete="off">
                 <select id="industry-select" style="display: none;">
-                    <option value="动植物栽培 (含肉厂/农业)">🍒 动植物栽培 (含肉厂/农业)</option>
-                    <option value="旅游和酒店业">🍹 旅游和酒店业</option>
-                    <option value="建筑业">🏗️ 建筑业</option>
-                    <option value="采矿业">⛏️ 采矿业</option>
-                    <option value="捕鱼与采珠业">🐟 捕鱼与采珠业</option>
+                    <option value="动植物">🍒 动植物栽培 (含农场/肉厂)</option>
+                    <option value="旅游">🍹 旅游和酒店业</option>
+                    <option value="建筑">🏗️ 建筑业</option>
+                    <option value="采矿">⛏️ 采矿业</option>
+                    <option value="捕鱼">🐟 捕鱼与采珠业</option>
                     <option value="林业">🌲 林业</option>
-                    <option value="灾后重建">🛡️ 灾后重建</option>
+                    <option value="灾后">🛡️ 灾后重建</option>
                 </select>
                 <button class="search-btn" onclick="performSearch()">查询</button>
             </div>
@@ -212,9 +212,12 @@
             }
         }
 
-        // --- 模式 2：查行业 (按州分组展示) ---
+        // --- 模式 2：查行业 (按州分组展示，引入模糊匹配) ---
         function searchByIndustry() {
-            const industry = document.getElementById('industry-select').value;
+            const selectEl = document.getElementById('industry-select');
+            const keyword = selectEl.value; // 取出关键词，比如 "动植物"
+            const displayLabel = selectEl.options[selectEl.selectedIndex].text; // 取出完整文字用于展示
+
             const resultCard = document.getElementById('result-card');
             resultCard.style.display = 'block';
 
@@ -223,22 +226,26 @@
 
             // 遍历并归类
             Object.entries(rulesData).forEach(([postcode, pData]) => {
-                if (pData[currentVisa].eligible && pData[currentVisa].industries.includes(industry)) {
-                    matchCount++;
-                    if (!stateGroups[pData.state]) stateGroups[pData.state] = [];
-                    // 取该邮编下最具代表性的一个镇名作为补充展示
-                    const townStr = pData.towns.length > 0 ? `(${pData.towns[0]})` : '';
-                    stateGroups[pData.state].push(`<span class="micro-tag">${postcode} ${townStr}</span>`);
+                if (pData[currentVisa].eligible) {
+                    // 核心修复：模糊匹配。只要 JSON 里的行业名包含我们的 keyword 就算命中
+                    const isMatch = pData[currentVisa].industries.some(ind => ind.includes(keyword));
+
+                    if (isMatch) {
+                        matchCount++;
+                        if (!stateGroups[pData.state]) stateGroups[pData.state] = [];
+
+                        const townStr = pData.towns.length > 0 ? `(${pData.towns[0]})` : '';
+                        stateGroups[pData.state].push(`<span class="micro-tag">${postcode} ${townStr}</span>`);
+                    }
                 }
             });
 
-            document.getElementById('result-title').innerText = `🎯 行业: ${industry}`;
+            document.getElementById('result-title').innerText = `🎯 搜索: ${displayLabel}`;
 
             if (matchCount > 0) {
                 document.getElementById('result-status').innerText = `✅ 找到 ${matchCount} 个支持 ${currentVisa} 签证的白名单邮编`;
                 document.getElementById('result-status').style.color = '#188038';
 
-                // 生成可折叠的手风琴列表
                 let htmlStr = '<div style="margin-top: 15px; text-align: left;">';
                 for (const [state, tags] of Object.entries(stateGroups)) {
                     htmlStr += `
