@@ -176,19 +176,33 @@ class WHVCrawler:
         html_417 = self.fetch_html(self.url_417)
         if html_417: self.extract_data_from_html(html_417, "417")
 
+        # ==========================================
+        # 🛡️ 核心新增：数据熔断与安全校验机制
+        # ==========================================
+        total_postcodes = len(self.final_data)
+        logging.info(f"📊 本次共解析出 {total_postcodes} 个包含集签规则的邮编。")
+
+        # 正常情况下，澳洲符合集签的邮编应该在 1000 到 3000 个之间
+        # 如果少于这个阈值，说明爬虫被 WAF 盾了，或者网页结构大改
+        if total_postcodes < 500:
+            error_msg = f"❌ 严重错误：抓取到的集签邮编数量异常偏少（仅 {total_postcodes} 个）！触发熔断机制，取消本次数据覆盖。"
+            logging.error(error_msg)
+            # 主动抛出异常，这会让 GitHub Actions 标记本次运行失败，并且不会执行后续的 git push
+            raise Exception(error_msg)
+        # ==========================================
+
         os.makedirs('data', exist_ok=True)
 
-        # 2. 导出数据结构改变：加入镇名反向索引，方便前端一秒查出
         output_data = {
             "update_time": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
             "postcode_data": self.final_data,
-            "town_index": self.town_to_postcode  # 给前端用的地名词典
+            "town_index": self.town_to_postcode
         }
 
         with open('data/rules.json', 'w', encoding='utf-8') as f:
             json.dump(output_data, f, ensure_ascii=False, indent=2)
 
-        logging.info("🎉 抓取完成！数据和地理信息已存入 data/rules.json")
+        logging.info("🎉 抓取完成！数据完整性校验通过，已存入 data/rules.json")
 
 
 if __name__ == "__main__":

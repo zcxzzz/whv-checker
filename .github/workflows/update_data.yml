@@ -34,6 +34,7 @@ jobs:
 
       - name: 💾 Commit and Push changes
         run: |
+          - name: 💾 安全校验与提交变更
           # 配置 Git 机器人身份
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
@@ -41,5 +42,28 @@ jobs:
           # 将可能更新的 rules.json 加入暂存区
           git add data/rules.json
           
-          # 检查是否有文件发生改变。如果有，则 Commit 并 Push；如果没有，则静默跳过
-          git diff --quiet && git diff --staged --quiet || (git commit -m "chore: auto update WHV data" && git push)
+          # 1. 检查是否有文件改变。如果没有，直接安全退出，不执行后续报错或推送
+          if git diff --staged --quiet; then
+            echo "✅ 数据无变化，无需提交。"
+            exit 0
+          fi
+
+          # 2. 获取 rules.json 本次变更中【被删除的行数】
+          # --numstat 会输出类似 "10  500  data/rules.json" (新增10行，删除500行)
+          # awk '{print $2}' 用于精准提取第二个数字（删除的行数）
+          DELETED_LINES=$(git diff --staged --numstat data/rules.json | awk '{print $2}')
+          DELETED_LINES=${DELETED_LINES:-0} # 如果为空则默认赋值为 0
+          
+          echo "📊 本次更新检测到删除了 $DELETED_LINES 行数据"
+
+          # 3. 终极物理熔断阈值：如果一次性删除超过 200 行，直接报错阻断！
+          # （你可以根据实际格式化后的 JSON 行数微调这个阈值，通常 200 是个安全的容错边界）
+          if [ "$DELETED_LINES" -gt 200 ]; then
+            echo "❌ 触发 YAML 层物理熔断：被删除的行数异常庞大（$DELETED_LINES 行）！"
+            echo "⚠️ 疑似爬虫未能抓取到完整的 HTML 节点，放弃本次 Commit 以保护线上数据！"
+            exit 1
+          fi
+
+          # 4. 通过所有校验，执行安全的 Commit 和 Push
+          git commit -m "chore: auto update WHV data"
+          git push
